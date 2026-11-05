@@ -1,5 +1,13 @@
 {
   "version": "7",
   "dialect": "postgresql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1793876751358,
+      "tag": "0000_cpq_schema_and_demo_catalog",
+      "breakpoints": true
+    }
+  ]
 }
