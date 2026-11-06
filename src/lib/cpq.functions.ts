@@ -273,7 +273,7 @@ export const bulkApplyChange = createServerFn({ method: "POST" })
     const { data: confs } = await sb.from("configurations").select("id, project_id").in("id", configIds);
     const projectIds = [...new Set((confs ?? []).map((c) => c.project_id))];
     if (projectIds.length !== 1) throw new Error("Een groepswijziging moet binnen één project blijven.");
-    const catalog = await loadCatalog(sb, { priceBookId: await priceBookForProject(sb, projectIds[0]) });
+    const catalog = await loadCatalog(sb, { priceBookId: await priceBookForProject(sb, projectIds[0]!) });
     const admin = await getAdmin();
     let changed = 0;
     const skipped: string[] = [];
@@ -508,6 +508,7 @@ export const transitionQuote = createServerFn({ method: "POST" })
     const sb = context.supabase as Sb;
     const role = await currentRole(sb, context.userId);
     const rule = TRANSITIONS[data.action];
+    if (!rule) throw new Error("Onbekende actie.");
     if (!rule.roles.includes(role)) throw new Error(`De rol ${role} mag deze actie niet uitvoeren.`);
     const { data: rev } = await sb.from("quote_revisions").select("*").eq("id", data.revisionId).single();
     if (!rev) throw new Error("Revisie niet gevonden.");
