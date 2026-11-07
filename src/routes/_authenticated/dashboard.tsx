@@ -1,4 +1,5 @@
-import { createFileRoute, Link, useRouter, type ErrorComponentProps } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { RouteError } from "@/components/cpq/route-error";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowRight } from "lucide-react";
 import { dashboardQuery } from "@/lib/queries";
@@ -7,7 +8,6 @@ import { QuoteStatusBadge } from "@/components/cpq/badges";
 import { eur, formatDate, formatDateTime, PROJECT_STATUS_LABEL, type QuoteStatus } from "@/lib/labels";
 import { useMe } from "@/components/cpq/app-shell";
 import { can } from "@/lib/auth";
-import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard – JoRPA CPQ demo" }, { name: "description", content: "Openstaande offertes, concepten en goedkeuringen." }] }),
@@ -15,27 +15,6 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
   errorComponent: RouteError,
 });
-
-export function RouteError({ error, reset }: ErrorComponentProps) {
-  const router = useRouter();
-  return (
-    <div role="alert" className="rounded-md border border-destructive/40 bg-destructive/5 p-4 text-sm">
-      <p className="font-medium text-destructive">Gegevens konden niet geladen worden.</p>
-      <p className="mt-1 text-muted-foreground">{error instanceof Error ? error.message : String(error)}</p>
-      <Button
-        size="sm"
-        variant="outline"
-        className="mt-3"
-        onClick={() => {
-          router.invalidate();
-          reset();
-        }}
-      >
-        Opnieuw proberen
-      </Button>
-    </div>
-  );
-}
 
 function Dashboard() {
   const me = useMe();
