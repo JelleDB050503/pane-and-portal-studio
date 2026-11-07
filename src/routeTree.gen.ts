@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedKlantenIndexRouteImport } from './routes/_authenticated/klanten.index'
+import { Route as AuthenticatedKlantenIdRouteImport } from './routes/_authenticated/klanten.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -40,17 +41,24 @@ const AuthenticatedKlantenIndexRoute =
     path: '/klanten/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedKlantenIdRoute = AuthenticatedKlantenIdRouteImport.update({
+  id: '/klanten/$id',
+  path: '/klanten/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/klanten/$id': typeof AuthenticatedKlantenIdRoute
   '/klanten/': typeof AuthenticatedKlantenIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/klanten/$id': typeof AuthenticatedKlantenIdRoute
   '/klanten': typeof AuthenticatedKlantenIndexRoute
 }
 export interface FileRoutesById {
@@ -59,19 +67,21 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/klanten/$id': typeof AuthenticatedKlantenIdRoute
   '/_authenticated/klanten/': typeof AuthenticatedKlantenIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/dashboard' | '/klanten/'
+  fullPaths: '/' | '/auth' | '/dashboard' | '/klanten/$id' | '/klanten/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dashboard' | '/klanten'
+  to: '/' | '/auth' | '/dashboard' | '/klanten/$id' | '/klanten'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/dashboard'
+    | '/_authenticated/klanten/$id'
     | '/_authenticated/klanten/'
   fileRoutesById: FileRoutesById
 }
@@ -118,16 +128,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedKlantenIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/klanten/$id': {
+      id: '/_authenticated/klanten/$id'
+      path: '/klanten/$id'
+      fullPath: '/klanten/$id'
+      preLoaderRoute: typeof AuthenticatedKlantenIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedKlantenIdRoute: typeof AuthenticatedKlantenIdRoute
   AuthenticatedKlantenIndexRoute: typeof AuthenticatedKlantenIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedKlantenIdRoute: AuthenticatedKlantenIdRoute,
   AuthenticatedKlantenIndexRoute: AuthenticatedKlantenIndexRoute,
 }
 
