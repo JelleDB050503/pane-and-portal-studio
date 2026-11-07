@@ -47,7 +47,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">Deze pagina kon niet geladen worden</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{error.message || "Er ging iets mis. Probeer opnieuw."}</p>
+        <p className="mt-2 text-sm text-muted-foreground">{error instanceof Error && error.message ? error.message : "Er ging iets mis. Probeer opnieuw."}</p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
