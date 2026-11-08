@@ -62,82 +62,91 @@ export const profilesQuery = () =>
     staleTime: 60_000,
   });
 
+async function fetchProject(id: string) {
+  const [project, items, configs, quotes, attachments] = await Promise.all([
+    supabase.from("projects").select("*, companies(*), contacts(*)").eq("id", id).maybeSingle(),
+    supabase.from("project_items").select("*").eq("project_id", id).is("deleted_at", null).order("seq"),
+    supabase.from("configurations").select("*").eq("project_id", id).is("deleted_at", null).order("created_at"),
+    supabase.from("quotes").select("*, quote_revisions(*)").eq("project_id", id).order("created_at"),
+    supabase.from("attachments").select("*").eq("project_id", id).is("deleted_at", null).order("created_at", { ascending: false }),
+  ]);
+  const p = check(project);
+  const configIds = (check(configs) ?? []).map((c) => c.id);
+  const ci = configIds.length
+    ? check(await supabase.from("configuration_items").select("*").in("configuration_id", configIds))
+    : [];
+  const revIds = (check(quotes) ?? []).flatMap((q) => q.quote_revisions.map((r) => r.id));
+  const jobs = revIds.length
+    ? check(await supabase.from("integration_jobs").select("*").in("entity_id", revIds).order("created_at", { ascending: false }))
+    : [];
+  return {
+    project: p,
+    items: check(items) ?? [],
+    configurations: check(configs) ?? [],
+    configItems: ci ?? [],
+    quotes: check(quotes) ?? [],
+    attachments: check(attachments) ?? [],
+    jobs: jobs ?? [],
+  };
+}
+export type ProjectData = NonNullable<Awaited<ReturnType<typeof fetchProject>>>;
+
 export const projectQuery = (id: string) =>
   queryOptions({
     queryKey: ["project", id],
-    queryFn: async () => {
-      const [project, items, configs, quotes, attachments] = await Promise.all([
-        supabase.from("projects").select("*, companies(*), contacts(*)").eq("id", id).maybeSingle(),
-        supabase.from("project_items").select("*").eq("project_id", id).is("deleted_at", null).order("seq"),
-        supabase.from("configurations").select("*").eq("project_id", id).is("deleted_at", null).order("created_at"),
-        supabase.from("quotes").select("*, quote_revisions(*)").eq("project_id", id).order("created_at"),
-        supabase.from("attachments").select("*").eq("project_id", id).is("deleted_at", null).order("created_at", { ascending: false }),
-      ]);
-      const p = check(project);
-      const configIds = (check(configs) ?? []).map((c) => c.id);
-      const ci = configIds.length
-        ? check(await supabase.from("configuration_items").select("*").in("configuration_id", configIds))
-        : [];
-      const revIds = (check(quotes) ?? []).flatMap((q) => q.quote_revisions.map((r) => r.id));
-      const jobs = revIds.length
-        ? check(await supabase.from("integration_jobs").select("*").in("entity_id", revIds).order("created_at", { ascending: false }))
-        : [];
-      return {
-        project: p,
-        items: check(items) ?? [],
-        configurations: check(configs) ?? [],
-        configItems: ci ?? [],
-        quotes: check(quotes) ?? [],
-        attachments: check(attachments) ?? [],
-        jobs: jobs ?? [],
-      };
-    },
+    queryFn: () => fetchProject(id),
   });
+
+async function fetchConfigItem(id: string) {
+  const ci = check(await supabase.from("configuration_items").select("*").eq("id", id).maybeSingle());
+  if (!ci) return null;
+  const [pi, conf] = await Promise.all([
+    supabase.from("project_items").select("*").eq("id", ci.project_item_id).single(),
+    supabase.from("configurations").select("*").eq("id", ci.configuration_id).single(),
+  ]);
+  const configuration = check(conf);
+  const project = check(await supabase.from("projects").select("id, name, project_number, companies(id, name, price_book_id)").eq("id", configuration.project_id).single());
+  const siblings = check(
+    await supabase.from("configuration_items").select("id, project_item_id").eq("configuration_id", ci.configuration_id),
+  );
+  const piList = check(await supabase.from("project_items").select("id, seq, label").eq("project_id", configuration.project_id).is("deleted_at", null).order("seq"));
+  return { item: ci, projectItem: check(pi), configuration, project, siblings: siblings ?? [], projectItems: piList ?? [] };
+}
+export type ConfigItemData = NonNullable<Awaited<ReturnType<typeof fetchConfigItem>>>;
 
 export const configItemQuery = (id: string) =>
   queryOptions({
     queryKey: ["config-item", id],
-    queryFn: async () => {
-      const ci = check(await supabase.from("configuration_items").select("*").eq("id", id).maybeSingle());
-      if (!ci) return null;
-      const [pi, conf] = await Promise.all([
-        supabase.from("project_items").select("*").eq("id", ci.project_item_id).single(),
-        supabase.from("configurations").select("*").eq("id", ci.configuration_id).single(),
-      ]);
-      const configuration = check(conf);
-      const project = check(await supabase.from("projects").select("id, name, project_number, companies(id, name, price_book_id)").eq("id", configuration.project_id).single());
-      const siblings = check(
-        await supabase.from("configuration_items").select("id, project_item_id").eq("configuration_id", ci.configuration_id),
-      );
-      const piList = check(await supabase.from("project_items").select("id, seq, label").eq("project_id", configuration.project_id).is("deleted_at", null).order("seq"));
-      return { item: ci, projectItem: check(pi), configuration, project, siblings: siblings ?? [], projectItems: piList ?? [] };
-    },
+    queryFn: () => fetchConfigItem(id),
   });
+
+async function fetchRevision(id: string) {
+  const rev = check(await supabase.from("quote_revisions").select("*").eq("id", id).maybeSingle());
+  if (!rev) return null;
+  const [quote, allRevs, approvals, costs, jobs, docs] = await Promise.all([
+    supabase.from("quotes").select("*, projects(id, name, project_number, status, sync_status, companies(name))").eq("id", rev.quote_id).single(),
+    supabase.from("quote_revisions").select("id, revision_no, status, total_net, created_at, locked").eq("quote_id", rev.quote_id).order("revision_no"),
+    supabase.from("approvals").select("*").eq("revision_id", id).order("created_at"),
+    supabase.from("quote_revision_costs").select("*").eq("revision_id", id).maybeSingle(),
+    supabase.from("integration_jobs").select("*, sync_events(*)").eq("entity_id", id).order("created_at", { ascending: false }),
+    supabase.from("documents").select("*").eq("quote_revision_id", id).order("created_at", { ascending: false }),
+  ]);
+  return {
+    revision: rev,
+    quote: check(quote),
+    revisions: check(allRevs) ?? [],
+    approvals: check(approvals) ?? [],
+    costs: costs.error ? null : costs.data,
+    jobs: check(jobs) ?? [],
+    documents: check(docs) ?? [],
+  };
+}
+export type RevisionData = NonNullable<Awaited<ReturnType<typeof fetchRevision>>>;
 
 export const revisionQuery = (id: string) =>
   queryOptions({
     queryKey: ["revision", id],
-    queryFn: async () => {
-      const rev = check(await supabase.from("quote_revisions").select("*").eq("id", id).maybeSingle());
-      if (!rev) return null;
-      const [quote, allRevs, approvals, costs, jobs, docs] = await Promise.all([
-        supabase.from("quotes").select("*, projects(id, name, project_number, status, sync_status, companies(name))").eq("id", rev.quote_id).single(),
-        supabase.from("quote_revisions").select("id, revision_no, status, total_net, created_at, locked").eq("quote_id", rev.quote_id).order("revision_no"),
-        supabase.from("approvals").select("*").eq("revision_id", id).order("created_at"),
-        supabase.from("quote_revision_costs").select("*").eq("revision_id", id).maybeSingle(),
-        supabase.from("integration_jobs").select("*, sync_events(*)").eq("entity_id", id).order("created_at", { ascending: false }),
-        supabase.from("documents").select("*").eq("quote_revision_id", id).order("created_at", { ascending: false }),
-      ]);
-      return {
-        revision: rev,
-        quote: check(quote),
-        revisions: check(allRevs) ?? [],
-        approvals: check(approvals) ?? [],
-        costs: costs.error ? null : costs.data,
-        jobs: check(jobs) ?? [],
-        documents: check(docs) ?? [],
-      };
-    },
+    queryFn: () => fetchRevision(id),
   });
 
 export const dashboardQuery = () =>
