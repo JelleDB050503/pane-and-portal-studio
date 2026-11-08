@@ -5,6 +5,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { companyQuery } from "@/lib/queries";
 import { PageHeader, Panel, Field, EmptyState } from "@/components/cpq/page";
 import { RouteError, NotFoundBlock } from "@/components/cpq/route-error";
@@ -112,7 +113,7 @@ const companySchema = z.object({
   notes: z.string().max(2000),
 });
 
-type CompanyRow = NonNullable<ReturnType<typeof useSuspenseQuery<Awaited<ReturnType<NonNullable<ReturnType<typeof companyQuery>["queryFn"]>>>>>["data"]["company"]>;
+type CompanyRow = Database["public"]["Tables"]["companies"]["Row"];
 
 function CompanyForm({ company, priceBooks, editable, onSaved }: { company: CompanyRow; priceBooks: { id: string; code: string; name: string }[]; editable: boolean; onSaved: () => void }) {
   const [form, setForm] = useState({
