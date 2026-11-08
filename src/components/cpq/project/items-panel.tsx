@@ -247,8 +247,8 @@ export function ItemsPanel({ data, catalog, variantId, setVariantId, computed, e
         onOpenChange={setAddOpen}
         catalog={catalog}
         nextSeq={(data.items.at(-1)?.seq ?? 0) + 1}
-        onCreate={async (label, productCode, family, add) => {
-          const res = await add({ data: { projectId, label, productCode, family } });
+        projectId={projectId}
+        onCreated={async (res) => {
           await refresh();
           const target = res.configurationItemIds[variantId];
           if (target) navigate({ to: "/configurator/$itemId", params: { itemId: target } });
@@ -397,13 +397,15 @@ function AddItemDialog({
   onOpenChange,
   catalog,
   nextSeq,
-  onCreate,
+  projectId,
+  onCreated,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   catalog: Catalog;
   nextSeq: number;
-  onCreate: (label: string, productCode: string | null, family: string, add: ReturnType<typeof useServerFn<typeof addProjectItem>>) => Promise<void>;
+  projectId: string;
+  onCreated: (res: { projectItemId: string; configurationItemIds: Record<string, string> }) => Promise<void>;
 }) {
   const add = useServerFn(addProjectItem);
   const [product, setProduct] = useState(catalog.products[0]?.code ?? "");
@@ -417,10 +419,11 @@ function AddItemDialog({
     if (!p) return;
     setBusy(true);
     try {
-      await onCreate(label.trim() || suggestion, p.code, p.family_code, add);
+      const res = await add({ data: { projectId, label: label.trim() || suggestion, productCode: p.code, family: p.family_code } });
       toast.success("Item toegevoegd aan alle varianten.");
       onOpenChange(false);
       setLabel("");
+      await onCreated(res);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Toevoegen mislukt.");
     } finally {
