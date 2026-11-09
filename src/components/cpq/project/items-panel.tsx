@@ -76,7 +76,7 @@ export function ItemsPanel({ data, catalog, variantId, setVariantId, computed, e
 
   async function doDelete(piId: string) {
     const { error } = await supabase.from("project_items").update({ deleted_at: new Date().toISOString() }).eq("id", piId);
-    if (error) return toast.error(`Verwijderen mislukt: ${error.message}`);
+    if (error) return void toast.error(`Verwijderen mislukt: ${error.message}`);
     toast.success("Item verwijderd uit het project.");
     setSelected((s) => s.filter((id) => !data.configItems.some((c) => c.id === id && c.project_item_id === piId)));
     refresh();
@@ -480,7 +480,7 @@ function VariantDialog({ open, onOpenChange, sourceName, sourceId, onCreated }: 
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim()) return toast.error("Geef de variant een naam.");
+    if (!name.trim()) return void toast.error("Geef de variant een naam.");
     setBusy(true);
     try {
       const res = await create({ data: { sourceConfigurationId: sourceId, name: name.trim(), description } });

@@ -143,7 +143,7 @@ function Dashboard() {
   );
 }
 
-function Kpi({ label, value, sub, tone }: { label: string; value: string; sub: string; tone?: "warning" }) {
+function Kpi({ label, value, sub, tone }: { label: string; value: string; sub: string; tone?: "warning" | undefined }) {
   return (
     <div className={`rounded-lg border bg-card p-4 ${tone === "warning" ? "border-warning/60" : "border-border"}`}>
       <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</div>

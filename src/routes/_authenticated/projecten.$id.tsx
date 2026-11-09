@@ -4,12 +4,12 @@ import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { FileText, Pencil, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { catalogQuery, projectQuery, profilesQuery } from "@/lib/queries";
+import { catalogQuery, projectQuery, profilesQuery, type ProjectData } from "@/lib/queries";
 import { computeItem } from "@/lib/cpq/pricing";
 import { formatEur } from "@/lib/cpq/totals";
 import type { ItemComputation } from "@/lib/cpq/types";
 import { can } from "@/lib/auth";
-import { PROJECT_STATUS_LABEL, SYNC_LABEL, formatDate, formatDateTime, eur } from "@/lib/labels";
+import { PROJECT_STATUS_LABEL, SYNC_LABEL, formatDate, formatDateTime } from "@/lib/labels";
 import { PageHeader, Panel, KeyValue, EmptyState, Field } from "@/components/cpq/page";
 import { NotFoundBlock, RouteError } from "@/components/cpq/route-error";
 import { QuoteStatusBadge, Tone } from "@/components/cpq/badges";
@@ -41,10 +41,10 @@ function ProjectPage() {
   const { id } = Route.useParams();
   const { data } = useSuspenseQuery(projectQuery(id));
   if (!data.project) return <NotFoundBlock what="Dit project" />;
-  return <ProjectDetail data={data as typeof data & { project: NonNullable<typeof data.project> }} />;
+  return <ProjectDetail data={data} />;
 }
 
-function ProjectDetail({ data }: { data: ReturnType<typeof useSuspenseQuery<Awaited<ReturnType<NonNullable<ReturnType<typeof projectQuery>["queryFn"]>>>>>["data"] & { project: NonNullable<unknown> } }) {
+function ProjectDetail({ data }: { data: ProjectData }) {
   const me = useMe();
   const qc = useQueryClient();
   const p = data.project!;
@@ -66,7 +66,7 @@ function ProjectDetail({ data }: { data: ReturnType<typeof useSuspenseQuery<Awai
 
   async function setStatus(status: string) {
     const { error } = await supabase.from("projects").update({ status: status as never }).eq("id", p.id);
-    if (error) return toast.error(`Status wijzigen mislukt: ${error.message}`);
+    if (error) return void toast.error(`Status wijzigen mislukt: ${error.message}`);
     toast.success("Projectstatus aangepast.");
     qc.invalidateQueries({ queryKey: ["project", p.id] });
     qc.invalidateQueries({ queryKey: ["projects"] });
@@ -148,7 +148,7 @@ function ProjectDetail({ data }: { data: ReturnType<typeof useSuspenseQuery<Awai
                 ["Contact", p.contacts ? `${p.contacts.first_name ?? ""} ${p.contacts.last_name}`.trim() : "—"],
                 ["Verantwoordelijke", profiles.find((x) => x.id === p.owner_id)?.full_name ?? "—"],
                 ["Gewenste levering", formatDate(p.desired_delivery_date)],
-                ["Btw", `${eur(null) === "—" ? "" : ""}${p.vat_rate}%`],
+                ["Btw", `${p.vat_rate}%`],
                 ["Prijsboek", catalog.priceBook ? `${catalog.priceBook.name} v${catalog.priceBook.version}` : "Niet ingesteld"],
                 ["JoRPA-sync", SYNC_LABEL[p.sync_status] ?? p.sync_status],
                 ["Laatst gewijzigd", formatDateTime(p.updated_at)],
@@ -192,7 +192,7 @@ function ProjectDetail({ data }: { data: ReturnType<typeof useSuspenseQuery<Awai
   );
 }
 
-function QuotesPanel({ data }: { data: { quotes: ReturnType<typeof useSuspenseQuery<never>>["data"] extends never ? never : never } | { quotes: { id: string; quote_number: string; title: string | null; quote_revisions: { id: string; revision_no: number; status: string; total_net: number; created_at: string }[] }[] } }) {
+function QuotesPanel({ data }: { data: ProjectData }) {
   const quotes = data.quotes;
   return (
     <Panel title="Offertes">
@@ -214,7 +214,7 @@ function QuotesPanel({ data }: { data: { quotes: ReturnType<typeof useSuspenseQu
                       <Link to="/offertes/$revisionId" params={{ revisionId: r.id }} className="font-medium text-primary hover:underline">
                         Revisie {r.revision_no}
                       </Link>
-                      <QuoteStatusBadge status={r.status as never} />
+                      <QuoteStatusBadge status={r.status} />
                       <span className="text-xs text-muted-foreground">{formatDateTime(r.created_at)}</span>
                       <span className="tabular font-medium">{formatEur(Math.round(Number(r.total_net) * 100))}</span>
                     </li>
@@ -236,7 +236,7 @@ function EditProjectDialog({ open, onOpenChange, project }: { open: boolean; onO
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.name.trim()) return toast.error("Projectnaam is verplicht.");
+    if (!form.name.trim()) return void toast.error("Projectnaam is verplicht.");
     setBusy(true);
     const { error } = await supabase
       .from("projects")
@@ -250,7 +250,7 @@ function EditProjectDialog({ open, onOpenChange, project }: { open: boolean; onO
       })
       .eq("id", project.id);
     setBusy(false);
-    if (error) return toast.error(`Opslaan mislukt: ${error.message}`);
+    if (error) return void toast.error(`Opslaan mislukt: ${error.message}`);
     toast.success("Projectgegevens opgeslagen.");
     qc.invalidateQueries({ queryKey: ["project", project.id] });
     onOpenChange(false);

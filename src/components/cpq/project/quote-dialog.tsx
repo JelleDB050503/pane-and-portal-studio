@@ -16,7 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-export function QuoteDialog({ open, onOpenChange, data, catalog, role, defaultVariant }: { open: boolean; onOpenChange: (o: boolean) => void; data: ProjectData; catalog: Catalog; role: AppRole; defaultVariant: string }) {
+export function QuoteDialog({ open, onOpenChange, data, catalog, role, defaultVariant }: { open: boolean; onOpenChange: (o: boolean) => void; data: ProjectData; catalog: Catalog; role: AppRole | null; defaultVariant: string }) {
   const create = useServerFn(createQuoteRevision);
   const navigate = useNavigate();
   const { data: templates = [] } = useQuery({
@@ -30,7 +30,7 @@ export function QuoteDialog({ open, onOpenChange, data, catalog, role, defaultVa
   const [template, setTemplate] = useState<string>("standaard");
   const [busy, setBusy] = useState(false);
   const pct = Math.max(0, Math.min(100, Number(discount.replace(",", ".")) || 0));
-  const policy = checkDiscountPolicy(catalog.discounts, role, pct, null);
+  const policy = checkDiscountPolicy(catalog.discounts, role ?? "", pct, null);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();

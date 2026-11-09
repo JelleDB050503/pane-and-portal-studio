@@ -4,9 +4,10 @@ import { loadCatalog } from "@/lib/cpq/catalog-loader";
 
 // Browser-side reads. Row-level security in the database decides what each role sees.
 
-function check<T>(res: { data: T | null; error: { message: string } | null }): T {
+type Ok<R> = R extends { error: null; data: infer D } ? D : never;
+function check<R extends { data: unknown; error: { message: string } | null }>(res: R): Ok<R> {
   if (res.error) throw new Error(res.error.message);
-  return res.data as T;
+  return res.data as Ok<R>;
 }
 
 export const catalogQuery = (priceBookId: string | null, includeCosts: boolean) =>
