@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedConfiguratorItemIdRouteImport } from './routes/_authenticated/configurator.$itemId'
 import { Route as AuthenticatedKlantenIndexRouteImport } from './routes/_authenticated/klanten.index'
 import { Route as AuthenticatedKlantenIdRouteImport } from './routes/_authenticated/klanten.$id'
 import { Route as AuthenticatedProjectenIndexRouteImport } from './routes/_authenticated/projecten.index'
@@ -37,6 +38,12 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedConfiguratorItemIdRoute =
+  AuthenticatedConfiguratorItemIdRouteImport.update({
+    id: '/configurator/$itemId',
+    path: '/configurator/$itemId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedKlantenIndexRoute =
   AuthenticatedKlantenIndexRouteImport.update({
     id: '/klanten/',
@@ -65,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/configurator/$itemId': typeof AuthenticatedConfiguratorItemIdRoute
   '/klanten/$id': typeof AuthenticatedKlantenIdRoute
   '/projecten/$id': typeof AuthenticatedProjectenIdRoute
   '/klanten/': typeof AuthenticatedKlantenIndexRoute
@@ -74,6 +82,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/configurator/$itemId': typeof AuthenticatedConfiguratorItemIdRoute
   '/klanten/$id': typeof AuthenticatedKlantenIdRoute
   '/projecten/$id': typeof AuthenticatedProjectenIdRoute
   '/klanten': typeof AuthenticatedKlantenIndexRoute
@@ -85,6 +94,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/configurator/$itemId': typeof AuthenticatedConfiguratorItemIdRoute
   '/_authenticated/klanten/$id': typeof AuthenticatedKlantenIdRoute
   '/_authenticated/projecten/$id': typeof AuthenticatedProjectenIdRoute
   '/_authenticated/klanten/': typeof AuthenticatedKlantenIndexRoute
@@ -96,6 +106,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/configurator/$itemId'
     | '/klanten/$id'
     | '/projecten/$id'
     | '/klanten/'
@@ -105,6 +116,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/configurator/$itemId'
     | '/klanten/$id'
     | '/projecten/$id'
     | '/klanten'
@@ -115,6 +127,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/dashboard'
+    | '/_authenticated/configurator/$itemId'
     | '/_authenticated/klanten/$id'
     | '/_authenticated/projecten/$id'
     | '/_authenticated/klanten/'
@@ -157,6 +170,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/configurator/$itemId': {
+      id: '/_authenticated/configurator/$itemId'
+      path: '/configurator/$itemId'
+      fullPath: '/configurator/$itemId'
+      preLoaderRoute: typeof AuthenticatedConfiguratorItemIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/klanten/': {
       id: '/_authenticated/klanten/'
       path: '/klanten'
@@ -190,6 +210,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedConfiguratorItemIdRoute: typeof AuthenticatedConfiguratorItemIdRoute
   AuthenticatedKlantenIdRoute: typeof AuthenticatedKlantenIdRoute
   AuthenticatedProjectenIdRoute: typeof AuthenticatedProjectenIdRoute
   AuthenticatedKlantenIndexRoute: typeof AuthenticatedKlantenIndexRoute
@@ -198,6 +219,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedConfiguratorItemIdRoute: AuthenticatedConfiguratorItemIdRoute,
   AuthenticatedKlantenIdRoute: AuthenticatedKlantenIdRoute,
   AuthenticatedProjectenIdRoute: AuthenticatedProjectenIdRoute,
   AuthenticatedKlantenIndexRoute: AuthenticatedKlantenIndexRoute,
