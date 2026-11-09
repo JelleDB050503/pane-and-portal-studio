@@ -143,7 +143,7 @@ function CompanyForm({ company, priceBooks, editable, onSaved }: { company: Comp
       .update({ ...v, email: v.email || null, phone: v.phone || null, street: v.street || null, postal_code: v.postal_code || null, city: v.city || null, vat_number: v.vat_number || null, notes: v.notes || null, price_book_id: priceBook === "standaard" ? null : priceBook })
       .eq("id", company.id);
     setBusy(false);
-    if (error) return toast.error(`Opslaan mislukt: ${error.message}`);
+    if (error) return void toast.error(`Opslaan mislukt: ${error.message}`);
     toast.success("Klantgegevens opgeslagen.");
     onSaved();
   }
@@ -230,7 +230,7 @@ function Contacts({ companyId, contacts, editable, onChanged }: { companyId: str
     setErrors({});
     const v = parsed.data;
     const { error } = await supabase.from("contacts").insert({ company_id: companyId, first_name: v.first_name, last_name: v.last_name, email: v.email || null, phone: v.phone || null, job_title: v.job_title || null, is_primary: contacts.length === 0 });
-    if (error) return toast.error(`Contact kon niet toegevoegd worden: ${error.message}`);
+    if (error) return void toast.error(`Contact kon niet toegevoegd worden: ${error.message}`);
     toast.success("Contactpersoon toegevoegd.");
     setForm({ first_name: "", last_name: "", email: "", phone: "", job_title: "" });
     setAdding(false);
@@ -239,7 +239,7 @@ function Contacts({ companyId, contacts, editable, onChanged }: { companyId: str
 
   async function remove(id: string) {
     const { error } = await supabase.from("contacts").update({ deleted_at: new Date().toISOString() }).eq("id", id);
-    if (error) return toast.error(`Verwijderen mislukt: ${error.message}`);
+    if (error) return void toast.error(`Verwijderen mislukt: ${error.message}`);
     toast.success("Contactpersoon verwijderd.");
     onChanged();
   }

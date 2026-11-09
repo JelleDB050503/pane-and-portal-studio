@@ -73,7 +73,7 @@ export function NewProjectDialog({ open, onOpenChange, companyId }: { open: bool
       .single();
     if (error || !data) {
       setBusy(false);
-      return toast.error(`Project kon niet aangemaakt worden: ${error?.message ?? ""}`);
+      return void toast.error(`Project kon niet aangemaakt worden: ${error?.message ?? ""}`);
     }
     const { error: e2 } = await supabase.from("configurations").insert({ project_id: data.id, name: "Basis", description: "Hoofdvoorstel", is_primary: true, created_by: user.user?.id ?? null });
     setBusy(false);

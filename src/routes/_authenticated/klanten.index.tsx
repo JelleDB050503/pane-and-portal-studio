@@ -149,7 +149,7 @@ function NewCustomerDialog({ open, onOpenChange }: { open: boolean; onOpenChange
       .select("id")
       .single();
     setBusy(false);
-    if (error || !data) return toast.error(`Klant kon niet opgeslagen worden: ${error?.message ?? ""}`);
+    if (error || !data) return void toast.error(`Klant kon niet opgeslagen worden: ${error?.message ?? ""}`);
     toast.success("Klant aangemaakt.");
     await qc.invalidateQueries({ queryKey: ["companies"] });
     onOpenChange(false);

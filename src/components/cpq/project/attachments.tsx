@@ -18,32 +18,32 @@ export function Attachments({ projectId, attachments, editable }: { projectId: s
   const refresh = () => qc.invalidateQueries({ queryKey: ["project", projectId] });
 
   async function upload(file: File) {
-    if (file.size > MAX_BYTES) return toast.error("Bestand is groter dan 10 MB.");
+    if (file.size > MAX_BYTES) return void toast.error("Bestand is groter dan 10 MB.");
     setBusy(true);
     const safe = file.name.replace(/[^\w.\-]+/g, "_").slice(-100);
     const path = `${projectId}/${crypto.randomUUID()}-${safe}`;
     const { error } = await supabase.storage.from("attachments").upload(path, file, { contentType: file.type || "application/octet-stream" });
     if (error) {
       setBusy(false);
-      return toast.error(`Upload mislukt: ${error.message}`);
+      return void toast.error(`Upload mislukt: ${error.message}`);
     }
     const { data: user } = await supabase.auth.getUser();
     const { error: e2 } = await supabase.from("attachments").insert({ project_id: projectId, file_name: file.name.slice(0, 200), storage_path: path, mime_type: file.type || null, size_bytes: file.size, uploaded_by: user.user?.id ?? null });
     setBusy(false);
-    if (e2) return toast.error(`Bijlage kon niet geregistreerd worden: ${e2.message}`);
+    if (e2) return void toast.error(`Bijlage kon niet geregistreerd worden: ${e2.message}`);
     toast.success("Bijlage toegevoegd.");
     refresh();
   }
 
   async function download(path: string, name: string) {
     const { data, error } = await supabase.storage.from("attachments").createSignedUrl(path, 60, { download: name });
-    if (error || !data) return toast.error("Download mislukt.");
+    if (error || !data) return void toast.error("Download mislukt.");
     window.location.assign(data.signedUrl);
   }
 
   async function remove(id: string, path: string) {
     const { error } = await supabase.from("attachments").update({ deleted_at: new Date().toISOString() }).eq("id", id);
-    if (error) return toast.error(`Verwijderen mislukt: ${error.message}`);
+    if (error) return void toast.error(`Verwijderen mislukt: ${error.message}`);
     await supabase.storage.from("attachments").remove([path]);
     toast.success("Bijlage verwijderd.");
     refresh();

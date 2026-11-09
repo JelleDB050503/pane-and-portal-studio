@@ -66,7 +66,7 @@ function ProjectDetail({ data }: { data: ProjectData }) {
 
   async function setStatus(status: string) {
     const { error } = await supabase.from("projects").update({ status: status as never }).eq("id", p.id);
-    if (error) return toast.error(`Status wijzigen mislukt: ${error.message}`);
+    if (error) return void toast.error(`Status wijzigen mislukt: ${error.message}`);
     toast.success("Projectstatus aangepast.");
     qc.invalidateQueries({ queryKey: ["project", p.id] });
     qc.invalidateQueries({ queryKey: ["projects"] });
@@ -236,7 +236,7 @@ function EditProjectDialog({ open, onOpenChange, project }: { open: boolean; onO
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.name.trim()) return toast.error("Projectnaam is verplicht.");
+    if (!form.name.trim()) return void toast.error("Projectnaam is verplicht.");
     setBusy(true);
     const { error } = await supabase
       .from("projects")
@@ -250,7 +250,7 @@ function EditProjectDialog({ open, onOpenChange, project }: { open: boolean; onO
       })
       .eq("id", project.id);
     setBusy(false);
-    if (error) return toast.error(`Opslaan mislukt: ${error.message}`);
+    if (error) return void toast.error(`Opslaan mislukt: ${error.message}`);
     toast.success("Projectgegevens opgeslagen.");
     qc.invalidateQueries({ queryKey: ["project", project.id] });
     onOpenChange(false);
