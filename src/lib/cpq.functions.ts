@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database, Json } from "@/integrations/supabase/types";
@@ -11,6 +11,7 @@ import { buildSnapshot, totalsToColumns, type RevisionSnapshot } from "@/lib/cpq
 import { checkDiscountPolicy } from "@/lib/cpq/totals";
 import type { Catalog, ItemConfig } from "@/lib/cpq/types";
 import { getJorpaConnector, type JorpaQuotePayload } from "@/lib/connectors/jorpa";
+import { createLocalSession } from "@/lib/local-db";
 
 // All writes to configuration items, quotes, approvals and integration jobs go
 // through these server functions: validation + pricing are re-run here, never trusted from the browser.
@@ -100,6 +101,8 @@ const DEMO_NAMES: Record<AppRole, string> = {
 export const demoSignIn = createServerFn({ method: "POST" })
   .inputValidator((d: { role: string }) => z.object({ role: z.enum(ROLES) }).parse(d))
   .handler(async ({ data }) => {
+    return createLocalSession(data.role);
+    /*
     const admin = await getAdmin();
     const email = `demo-${data.role}@jorpa-demo.example.com`;
     const fullName = DEMO_NAMES[data.role];
@@ -150,7 +153,7 @@ export const demoSignIn = createServerFn({ method: "POST" })
       console.error("demoSignIn verifyOtp", vErr?.message);
       throw new Error("Demo-sessie kon niet gestart worden.");
     }
-    return { access_token: verified.session.access_token, refresh_token: verified.session.refresh_token };
+    */
   });
 
 // ---------------------------------------------------------- configuration items
@@ -162,7 +165,7 @@ export const saveConfigurationItem = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const sb = context.supabase as Sb;
+    const sb = context.supabase as unknown as Sb;
     await requireRoles(sb, context.userId, SALES);
     const { data: row, error } = await sb.from("configuration_items").select("id, version, configuration_id").eq("id", data.id).single();
     if (error || !row) throw new Error("Configuratie niet gevonden.");
@@ -193,7 +196,7 @@ export const addProjectItem = createServerFn({ method: "POST" })
     z.object({ projectId: z.string().uuid(), label: z.string().trim().min(1).max(120), productCode: z.string().max(40).nullable(), family: z.string().max(40) }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const sb = context.supabase as Sb;
+    const sb = context.supabase as unknown as Sb;
     await requireRoles(sb, context.userId, SALES);
     const { data: items } = await sb.from("project_items").select("seq").eq("project_id", data.projectId).order("seq", { ascending: false }).limit(1);
     const seq = (items?.[0]?.seq ?? 0) + 1;
@@ -223,7 +226,7 @@ export const duplicateProjectItem = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { configurationItemId: string }) => z.object({ configurationItemId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const sb = context.supabase as Sb;
+    const sb = context.supabase as unknown as Sb;
     await requireRoles(sb, context.userId, SALES);
     const { data: src } = await sb.from("configuration_items").select("id, project_item_id, configuration_id").eq("id", data.configurationItemId).single();
     if (!src) throw new Error("Item niet gevonden.");
@@ -265,7 +268,7 @@ export const bulkApplyChange = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const sb = context.supabase as Sb;
+    const sb = context.supabase as unknown as Sb;
     await requireRoles(sb, context.userId, SALES);
     const { data: rows } = await sb.from("configuration_items").select("id, version, data, manual_overrides, configuration_id").in("id", data.configurationItemIds);
     if (!rows?.length) throw new Error("Geen items gevonden.");
@@ -307,7 +310,7 @@ export const createVariant = createServerFn({ method: "POST" })
     z.object({ sourceConfigurationId: z.string().uuid(), name: z.string().trim().min(1).max(120), description: z.string().max(500) }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const sb = context.supabase as Sb;
+    const sb = context.supabase as unknown as Sb;
     await requireRoles(sb, context.userId, SALES);
     const { data: src } = await sb.from("configurations").select("id, project_id").eq("id", data.sourceConfigurationId).single();
     if (!src) throw new Error("Variant niet gevonden.");
@@ -363,7 +366,7 @@ export const createQuoteRevision = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const sb = context.supabase as Sb;
+    const sb = context.supabase as unknown as Sb;
     const role = await requireRoles(sb, context.userId, SALES);
     const admin = await getAdmin();
     const { data: project } = await sb.from("projects").select("*").eq("id", data.projectId).single();
@@ -505,7 +508,7 @@ export const transitionQuote = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const sb = context.supabase as Sb;
+    const sb = context.supabase as unknown as Sb;
     const role = await currentRole(sb, context.userId);
     const rule = TRANSITIONS[data.action];
     if (!rule) throw new Error("Onbekende actie.");
@@ -581,7 +584,7 @@ export const sendToJorpa = createServerFn({ method: "POST" })
     z.object({ revisionId: z.string().uuid(), simulate: z.enum(["none", "timeout", "server_error"]) }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const sb = context.supabase as Sb;
+    const sb = context.supabase as unknown as Sb;
     await requireRoles(sb, context.userId, SALES);
     const { data: rev } = await sb.from("quote_revisions").select("*").eq("id", data.revisionId).single();
     if (!rev) throw new Error("Revisie niet gevonden.");

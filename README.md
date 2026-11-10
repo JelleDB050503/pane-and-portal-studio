@@ -14,7 +14,7 @@ Continue developing this project in the [Lovable editor](https://lovable.dev/pro
 
 ## Development
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating). The app runs in local demo mode with an in-memory database; Supabase credentials are not required.
 
 ```sh
 git clone <this-repository-url>
@@ -22,3 +22,5 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+
+Open `http://localhost:5173` and choose one of the demo roles. Data is reset when the development server restarts.

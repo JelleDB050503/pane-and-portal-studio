@@ -3,7 +3,6 @@ import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Briefcase, Wrench, ShieldCheck, Factory } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { demoSignIn } from "@/lib/cpq.functions";
 import type { AppRole } from "@/lib/auth";
 
@@ -23,8 +22,8 @@ export function DemoLogin() {
     setBusy(role);
     try {
       const tokens = await signIn({ data: { role } });
-      const { error } = await supabase.auth.setSession(tokens);
-      if (error) throw new Error("Sessie kon niet gestart worden.");
+      const { error } = await (await import("@/integrations/supabase/client")).supabase.auth.setSession(tokens);
+      if (error) throw new Error("Lokale sessie kon niet gestart worden.");
       await navigate({ to: "/dashboard" });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Aanmelden mislukt.");
