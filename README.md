@@ -23,4 +23,19 @@ npm i
 npm run dev
 ```
 
-Open `http://localhost:5173` and choose one of the demo roles. Data is reset when the development server restarts.
+Open `http://localhost:5173` and choose one of the demo roles. Data is stored locally and remains after restarting the development server.
+
+The local demo uses SQLite at `data/demo.sqlite`. The schema is in [db/schema.sql](./db/schema.sql) and the reproducible synthetic seed is in [db/seed.sql](./db/seed.sql); the first startup seeds the database automatically. The SQLite file is ignored by Git.
+
+### Lokale AI met Ollama
+
+Installeer Ollama via [ollama.com/download](https://ollama.com/download) en start daarna in PowerShell:
+
+```powershell
+ollama pull qwen3.5:9b
+ollama serve
+```
+
+Maak vervolgens `.env` aan op basis van [.env.example](./.env.example), of gebruik de standaardwaarden. Start de ontwikkelserver opnieuw met `npm run dev`. De AI-agent in **Verkoopassistent** gebruikt dan Ollama via de server op `http://127.0.0.1:11434`.
+
+Een ander lokaal model kan met `OLLAMA_MODEL` worden ingesteld, bijvoorbeeld `qwen2.5:7b`. De AI geeft alleen voorstellen; CPQ-validatie en prijsberekening blijven server-side leidend.

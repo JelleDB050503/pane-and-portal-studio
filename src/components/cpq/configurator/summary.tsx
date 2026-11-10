@@ -1,4 +1,4 @@
-import { AlertTriangle, CircleCheck, CircleX, Info } from "lucide-react";
+import { AlertTriangle, CircleCheck, CircleX, Info, Zap } from "lucide-react";
 import type { ItemComputation, PriceCategory } from "@/lib/cpq/types";
 import { formatEur } from "@/lib/cpq/totals";
 import { STATUS_LABEL } from "@/lib/cpq/rules";
@@ -73,6 +73,27 @@ export function PriceBreakdown({ comp, showCost }: { comp: ItemComputation; show
   const margin = p.cost_cents !== null && p.net_cents > 0 ? Math.round(((p.net_cents - p.cost_cents) / p.net_cents) * 1000) / 10 : null;
   return (
     <div className="space-y-3 text-sm">
+      <div className="rounded-lg border border-primary/20 bg-primary/[0.04] p-3">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-primary">
+              <Zap className="h-3.5 w-3.5" /> Live prijs
+            </div>
+            <div className="mt-1 text-2xl font-semibold tabular">{formatEur(p.net_cents)}</div>
+            <div className="text-xs text-muted-foreground">netto voor {p.quantity} {p.quantity === 1 ? "stuk" : "stuks"} · excl. btw</div>
+          </div>
+          <div className="text-right text-xs text-muted-foreground">
+            <div>Per stuk</div>
+            <div className="mt-0.5 text-sm font-medium tabular text-foreground">{formatEur(p.unit_cents)}</div>
+          </div>
+        </div>
+        {p.qty_discount_cents > 0 && (
+          <div className="mt-3 flex items-center justify-between border-t border-primary/10 pt-2 text-xs text-success">
+            <span>Volumekorting {p.qty_discount_percent}%</span>
+            <span className="tabular">− {formatEur(p.qty_discount_cents)}</span>
+          </div>
+        )}
+      </div>
       {[...groups.entries()].map(([cat, lines]) => (
         <div key={cat}>
           <div className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{CAT_LABEL[cat]}</div>

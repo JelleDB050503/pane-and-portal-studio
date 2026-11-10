@@ -166,6 +166,12 @@ export const dashboardQuery = () =>
     },
   });
 
+export const productionItemsQuery = () =>
+  queryOptions({
+    queryKey: ["production"],
+    queryFn: async () => check(await supabase.from("configuration_items").select("*").order("updated_at", { ascending: false })) ?? [],
+  });
+
 export const productionQuery = () =>
   queryOptions({
     queryKey: ["production"],

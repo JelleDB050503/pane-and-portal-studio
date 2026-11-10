@@ -20,6 +20,7 @@ import { WindowDrawing, PART_LABEL } from "@/components/cpq/window-drawing";
 import { ChoiceGrid, autoFor, optionChoices } from "@/components/cpq/configurator/option-picker";
 import { PriceBreakdown, ValidationList } from "@/components/cpq/configurator/summary";
 import { BULK_FIELDS, bulkFieldLabel } from "@/components/cpq/project/items-panel";
+import { Parametric3DView } from "@/components/cpq/configurator/parametric-3d-view";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -404,6 +405,9 @@ function Configurator({ data }: { data: ConfigItemData }) {
               <WindowDrawing config={eff} highlight={hi} onHover={setHover} />
             </div>
             <p className="mt-1 text-center text-xs text-muted-foreground">{hi ? `Gemarkeerd: ${PART_LABEL[hi]}` : "Beweeg over de tekening om onderdelen te zien"} · zicht van binnen</p>
+          </Panel>
+          <Panel title="3D-weergave">
+            <Parametric3DView config={eff} />
           </Panel>
           <Panel title="Validatie">
             <ValidationList comp={comp} onJump={(f) => setStep(stepOfField(catalog, f) ?? step)} />

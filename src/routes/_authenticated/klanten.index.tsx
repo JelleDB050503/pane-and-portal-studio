@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Plus, Search } from "lucide-react";
@@ -10,11 +10,12 @@ import { PageHeader, EmptyState, Field } from "@/components/cpq/page";
 import { RouteError } from "@/components/cpq/route-error";
 import { useMe } from "@/components/cpq/app-shell";
 import { can } from "@/lib/auth";
-import { COMPANY_TYPE_LABEL } from "@/lib/labels";
+import { COMPANY_TYPE_KEYS } from "@/lib/labels";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/klanten/")({
   head: () => ({ meta: [{ title: "Klanten – JoRPA CPQ demo" }, { name: "description", content: "Klanten zoeken en beheren." }] }),
@@ -25,6 +26,10 @@ export const Route = createFileRoute("/_authenticated/klanten/")({
 
 function Customers() {
   const me = useMe();
+  const { t } = useI18n();
+  useEffect(() => {
+    document.title = `${t("page.customers.title")} – JoRPA CPQ demo`;
+  }, [t]);
   const { data } = useSuspenseQuery(companiesQuery());
   const [q, setQ] = useState("");
   const [type, setType] = useState("alle");
@@ -43,12 +48,12 @@ function Customers() {
   return (
     <div>
       <PageHeader
-        title="Klanten"
-        subtitle={`${data.length} klanten · particulieren, aannemers, dealers en architecten`}
+        title={t("page.customers.title")}
+        subtitle={`${data.length} ${t("page.customers.subtitle")}`}
         actions={
           can.sell(me.role) && (
             <Button onClick={() => setOpen(true)}>
-              <Plus className="h-4 w-4" /> Nieuwe klant
+            <Plus className="h-4 w-4" /> {t("page.customers.new")}
             </Button>
           )
         }
@@ -64,9 +69,9 @@ function Customers() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="alle">Alle types</SelectItem>
-            {Object.entries(COMPANY_TYPE_LABEL).map(([k, v]) => (
+            {Object.entries(COMPANY_TYPE_KEYS).map(([k, key]) => (
               <SelectItem key={k} value={k}>
-                {v}
+                {t(key)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -97,7 +102,7 @@ function Customers() {
                         {c.name}
                       </Link>
                     </td>
-                    <td className="px-4 py-2.5">{COMPANY_TYPE_LABEL[c.company_type] ?? c.company_type}</td>
+                    <td className="px-4 py-2.5">{COMPANY_TYPE_KEYS[c.company_type] ? t(COMPANY_TYPE_KEYS[c.company_type]!) : c.company_type}</td>
                     <td className="px-4 py-2.5">{primary ? `${primary.first_name} ${primary.last_name}` : "—"}</td>
                     <td className="px-4 py-2.5">{c.city ?? "—"}</td>
                     <td className="px-4 py-2.5 font-mono text-xs">{c.vat_number ?? "—"}</td>
@@ -126,6 +131,7 @@ const schema = z.object({
 });
 
 function NewCustomerDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+  const { t } = useI18n();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: "", company_type: "particulier", email: "", phone: "", street: "", postal_code: "", city: "", vat_number: "" });
@@ -172,9 +178,9 @@ function NewCustomerDialog({ open, onOpenChange }: { open: boolean; onOpenChange
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(COMPANY_TYPE_LABEL).map(([k, v]) => (
+                {Object.entries(COMPANY_TYPE_KEYS).map(([k, key]) => (
                   <SelectItem key={k} value={k}>
-                    {v}
+                    {t(key)}
                   </SelectItem>
                 ))}
               </SelectContent>

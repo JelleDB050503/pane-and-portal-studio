@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Plus, Search } from "lucide-react";
@@ -8,10 +8,11 @@ import { RouteError } from "@/components/cpq/route-error";
 import { NewProjectDialog } from "@/components/cpq/new-project-dialog";
 import { useMe } from "@/components/cpq/app-shell";
 import { can } from "@/lib/auth";
-import { PROJECT_STATUS_LABEL, formatDate, formatDateTime } from "@/lib/labels";
+import { PROJECT_STATUS_KEYS, formatDate, formatDateTime } from "@/lib/labels";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/projecten/")({
   head: () => ({ meta: [{ title: "Projecten – JoRPA CPQ demo" }, { name: "description", content: "Projectlijst met klant, status en leverdatum." }] }),
@@ -24,6 +25,10 @@ export const Route = createFileRoute("/_authenticated/projecten/")({
 
 function Projects() {
   const me = useMe();
+  const { t } = useI18n();
+  useEffect(() => {
+    document.title = `${t("page.projects.title")} – JoRPA CPQ demo`;
+  }, [t]);
   const { data } = useSuspenseQuery(projectsQuery());
   const { data: profiles } = useSuspenseQuery(profilesQuery());
   const [q, setQ] = useState("");
@@ -39,12 +44,12 @@ function Projects() {
   return (
     <div>
       <PageHeader
-        title="Projecten"
-        subtitle={`${data.length} projecten`}
+        title={t("page.projects.title")}
+        subtitle={`${data.length} ${t("page.projects.subtitle")}`}
         actions={
           can.sell(me.role) && (
             <Button onClick={() => setOpen(true)}>
-              <Plus className="h-4 w-4" /> Nieuw project
+            <Plus className="h-4 w-4" /> {t("page.projects.new")}
             </Button>
           )
         }
@@ -60,9 +65,9 @@ function Projects() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="alle">Alle statussen</SelectItem>
-            {Object.entries(PROJECT_STATUS_LABEL).map(([k, v]) => (
+            {Object.entries(PROJECT_STATUS_KEYS).map(([k, key]) => (
               <SelectItem key={k} value={k}>
-                {v}
+                {t(key)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -97,7 +102,7 @@ function Projects() {
                   <td className="px-4 py-2.5">{p.companies?.name}</td>
                   <td className="px-4 py-2.5 text-xs">{[p.street, p.city].filter(Boolean).join(", ") || "—"}</td>
                   <td className="px-4 py-2.5 text-xs">{owner(p.owner_id)}</td>
-                  <td className="px-4 py-2.5">{PROJECT_STATUS_LABEL[p.status] ?? p.status}</td>
+                  <td className="px-4 py-2.5">{PROJECT_STATUS_KEYS[p.status] ? t(PROJECT_STATUS_KEYS[p.status]!) : p.status}</td>
                   <td className="px-4 py-2.5">{formatDate(p.desired_delivery_date)}</td>
                   <td className="tabular px-4 py-2.5 text-right">{p.project_items.filter((i) => !i.deleted_at).length}</td>
                   <td className="px-4 py-2.5 text-xs text-muted-foreground">{formatDateTime(p.updated_at)}</td>

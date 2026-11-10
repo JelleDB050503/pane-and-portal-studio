@@ -18,6 +18,10 @@ const roleFromToken = (token: string): AppRole | null => {
 };
 const ROLES = ["verkoper", "productbeheerder", "manager", "productie"] as const;
 
+export function getSeedTables() {
+  return Object.fromEntries([...tables.entries()].map(([table, rows]) => [table, rows.map((row) => ({ ...row }))]));
+}
+
 seed("price_books", [{ id: "pb-standard", code: "PB-STD-2026", name: "Standaard 2026", version: 1, factor: 1, valid_from: null, valid_to: null, parent_price_book_id: null, is_default: true, status: "actief", vat_default: 21 }]);
 seed("product_families", [
   { id: "family-window", code: "raam", name_nl: "Raam", name_fr: "Fenêtre", name_en: "Window", sort: 1, active: true },
@@ -91,6 +95,7 @@ seed("quote_revisions", [
 ]);
 seed("approvals", [{ id: "approval-vandamme", revision_id: "revision-vandamme", status: "in_afwachting", reason: "Managercontrole vereist voor deze fictieve offerte.", created_at: "2026-11-07T14:30:00.000Z" }]);
 for (const table of ["profiles", "user_roles", "attachments", "quote_lines", "quote_revision_costs", "documents", "integration_jobs", "sync_events"]) seed(table, []);
+seed("quote_templates", [{ id: "template-standard", code: "STD", name: "Standaardsjabloon", intro_text: "Bedankt voor uw aanvraag.", conditions_text: "Deze offerte is 30 dagen geldig.", validity_days: 30, is_default: true }]);
 
 function rowsFor(table: string) {
   const rows = tables.get(table);

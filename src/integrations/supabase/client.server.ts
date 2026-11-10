@@ -1,3 +1,3 @@
-import { createLocalClient } from "@/lib/local-db";
+import { createSqliteClient } from "@/lib/sqlite-db.server";
 
-export const supabaseAdmin = createLocalClient() as never;
+export const supabaseAdmin = createSqliteClient() as never;

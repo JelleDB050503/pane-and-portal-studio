@@ -1,7 +1,8 @@
 import { cn } from "@/lib/utils";
 import type { ItemStatus } from "@/lib/cpq/types";
 import { STATUS_LABEL } from "@/lib/cpq/rules";
-import { QUOTE_STATUS_LABEL, type QuoteStatus } from "@/lib/labels";
+import { QUOTE_STATUS_KEYS, type QuoteStatus } from "@/lib/labels";
+import { useI18n } from "@/lib/i18n";
 
 const base = "inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-xs font-medium whitespace-nowrap";
 
@@ -28,7 +29,8 @@ const QUOTE_TONE: Record<QuoteStatus, string> = {
 };
 
 export function QuoteStatusBadge({ status, className }: { status: QuoteStatus; className?: string }) {
-  return <span className={cn(base, QUOTE_TONE[status], className)}>{QUOTE_STATUS_LABEL[status]}</span>;
+  const { t } = useI18n();
+  return <span className={cn(base, QUOTE_TONE[status], className)}>{t(QUOTE_STATUS_KEYS[status])}</span>;
 }
 
 export function DemoTag({ className, children = "DEMO" }: { className?: string; children?: React.ReactNode }) {

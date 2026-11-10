@@ -1,6 +1,6 @@
 import { Link, Outlet, useNavigate, useRouteContext } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { LayoutDashboard, Users, FolderKanban, Factory, Settings2, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, FolderKanban, Factory, Settings2, LogOut, Lightbulb } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { can, ROLE_LABEL, type Me } from "@/lib/auth";
 import { LOCALES, useI18n, type MessageKey } from "@/lib/i18n";
@@ -10,10 +10,11 @@ export function useMe(): Me {
   return useRouteContext({ from: "/_authenticated" }).me;
 }
 
-const NAV: { to: "/dashboard" | "/klanten" | "/projecten" | "/productie" | "/beheer"; key: MessageKey; icon: typeof Users; show?: (m: Me) => boolean }[] = [
+const NAV: { to: "/dashboard" | "/klanten" | "/projecten" | "/productie" | "/beheer" | "/guided-selling"; key: MessageKey; icon: typeof Users; show?: (m: Me) => boolean }[] = [
   { to: "/dashboard", key: "nav.dashboard", icon: LayoutDashboard },
   { to: "/klanten", key: "nav.customers", icon: Users },
   { to: "/projecten", key: "nav.projects", icon: FolderKanban },
+  { to: "/guided-selling", key: "nav.guidedSelling", icon: Lightbulb },
   { to: "/productie", key: "nav.production", icon: Factory },
   { to: "/beheer", key: "nav.admin", icon: Settings2, show: (m) => can.admin(m.role) },
 ];

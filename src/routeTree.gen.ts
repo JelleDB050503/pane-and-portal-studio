@@ -12,10 +12,15 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedBeheerRouteImport } from './routes/_authenticated/beheer'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedGuidedSellingRouteImport } from './routes/_authenticated/guided-selling'
+import { Route as AuthenticatedProductieRouteImport } from './routes/_authenticated/productie'
 import { Route as AuthenticatedConfiguratorItemIdRouteImport } from './routes/_authenticated/configurator.$itemId'
+import { Route as AuthenticatedFicheItemIdRouteImport } from './routes/_authenticated/fiche.$itemId'
 import { Route as AuthenticatedKlantenIndexRouteImport } from './routes/_authenticated/klanten.index'
 import { Route as AuthenticatedKlantenIdRouteImport } from './routes/_authenticated/klanten.$id'
+import { Route as AuthenticatedOffertesRevisionIdRouteImport } from './routes/_authenticated/offertes.$revisionId'
 import { Route as AuthenticatedProjectenIndexRouteImport } from './routes/_authenticated/projecten.index'
 import { Route as AuthenticatedProjectenIdRouteImport } from './routes/_authenticated/projecten.$id'
 
@@ -33,15 +38,37 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedBeheerRoute = AuthenticatedBeheerRouteImport.update({
+  id: '/beheer',
+  path: '/beheer',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedGuidedSellingRoute =
+  AuthenticatedGuidedSellingRouteImport.update({
+    id: '/guided-selling',
+    path: '/guided-selling',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedProductieRoute = AuthenticatedProductieRouteImport.update({
+  id: '/productie',
+  path: '/productie',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedConfiguratorItemIdRoute =
   AuthenticatedConfiguratorItemIdRouteImport.update({
     id: '/configurator/$itemId',
     path: '/configurator/$itemId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFicheItemIdRoute =
+  AuthenticatedFicheItemIdRouteImport.update({
+    id: '/fiche/$itemId',
+    path: '/fiche/$itemId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedKlantenIndexRoute =
@@ -55,6 +82,12 @@ const AuthenticatedKlantenIdRoute = AuthenticatedKlantenIdRouteImport.update({
   path: '/klanten/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedOffertesRevisionIdRoute =
+  AuthenticatedOffertesRevisionIdRouteImport.update({
+    id: '/offertes/$revisionId',
+    path: '/offertes/$revisionId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedProjectenIndexRoute =
   AuthenticatedProjectenIndexRouteImport.update({
     id: '/projecten/',
@@ -71,9 +104,14 @@ const AuthenticatedProjectenIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/beheer': typeof AuthenticatedBeheerRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/guided-selling': typeof AuthenticatedGuidedSellingRoute
+  '/productie': typeof AuthenticatedProductieRoute
   '/configurator/$itemId': typeof AuthenticatedConfiguratorItemIdRoute
+  '/fiche/$itemId': typeof AuthenticatedFicheItemIdRoute
   '/klanten/$id': typeof AuthenticatedKlantenIdRoute
+  '/offertes/$revisionId': typeof AuthenticatedOffertesRevisionIdRoute
   '/projecten/$id': typeof AuthenticatedProjectenIdRoute
   '/klanten/': typeof AuthenticatedKlantenIndexRoute
   '/projecten/': typeof AuthenticatedProjectenIndexRoute
@@ -81,9 +119,14 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/beheer': typeof AuthenticatedBeheerRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/guided-selling': typeof AuthenticatedGuidedSellingRoute
+  '/productie': typeof AuthenticatedProductieRoute
   '/configurator/$itemId': typeof AuthenticatedConfiguratorItemIdRoute
+  '/fiche/$itemId': typeof AuthenticatedFicheItemIdRoute
   '/klanten/$id': typeof AuthenticatedKlantenIdRoute
+  '/offertes/$revisionId': typeof AuthenticatedOffertesRevisionIdRoute
   '/projecten/$id': typeof AuthenticatedProjectenIdRoute
   '/klanten': typeof AuthenticatedKlantenIndexRoute
   '/projecten': typeof AuthenticatedProjectenIndexRoute
@@ -93,9 +136,14 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/beheer': typeof AuthenticatedBeheerRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/guided-selling': typeof AuthenticatedGuidedSellingRoute
+  '/_authenticated/productie': typeof AuthenticatedProductieRoute
   '/_authenticated/configurator/$itemId': typeof AuthenticatedConfiguratorItemIdRoute
+  '/_authenticated/fiche/$itemId': typeof AuthenticatedFicheItemIdRoute
   '/_authenticated/klanten/$id': typeof AuthenticatedKlantenIdRoute
+  '/_authenticated/offertes/$revisionId': typeof AuthenticatedOffertesRevisionIdRoute
   '/_authenticated/projecten/$id': typeof AuthenticatedProjectenIdRoute
   '/_authenticated/klanten/': typeof AuthenticatedKlantenIndexRoute
   '/_authenticated/projecten/': typeof AuthenticatedProjectenIndexRoute
@@ -105,9 +153,14 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/beheer'
     | '/dashboard'
+    | '/guided-selling'
+    | '/productie'
     | '/configurator/$itemId'
+    | '/fiche/$itemId'
     | '/klanten/$id'
+    | '/offertes/$revisionId'
     | '/projecten/$id'
     | '/klanten/'
     | '/projecten/'
@@ -115,9 +168,14 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/beheer'
     | '/dashboard'
+    | '/guided-selling'
+    | '/productie'
     | '/configurator/$itemId'
+    | '/fiche/$itemId'
     | '/klanten/$id'
+    | '/offertes/$revisionId'
     | '/projecten/$id'
     | '/klanten'
     | '/projecten'
@@ -126,9 +184,14 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/beheer'
     | '/_authenticated/dashboard'
+    | '/_authenticated/guided-selling'
+    | '/_authenticated/productie'
     | '/_authenticated/configurator/$itemId'
+    | '/_authenticated/fiche/$itemId'
     | '/_authenticated/klanten/$id'
+    | '/_authenticated/offertes/$revisionId'
     | '/_authenticated/projecten/$id'
     | '/_authenticated/klanten/'
     | '/_authenticated/projecten/'
@@ -163,6 +226,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/beheer': {
+      id: '/_authenticated/beheer'
+      path: '/beheer'
+      fullPath: '/beheer'
+      preLoaderRoute: typeof AuthenticatedBeheerRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -170,11 +240,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/guided-selling': {
+      id: '/_authenticated/guided-selling'
+      path: '/guided-selling'
+      fullPath: '/guided-selling'
+      preLoaderRoute: typeof AuthenticatedGuidedSellingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/productie': {
+      id: '/_authenticated/productie'
+      path: '/productie'
+      fullPath: '/productie'
+      preLoaderRoute: typeof AuthenticatedProductieRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/configurator/$itemId': {
       id: '/_authenticated/configurator/$itemId'
       path: '/configurator/$itemId'
       fullPath: '/configurator/$itemId'
       preLoaderRoute: typeof AuthenticatedConfiguratorItemIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/fiche/$itemId': {
+      id: '/_authenticated/fiche/$itemId'
+      path: '/fiche/$itemId'
+      fullPath: '/fiche/$itemId'
+      preLoaderRoute: typeof AuthenticatedFicheItemIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/klanten/': {
@@ -189,6 +280,13 @@ declare module '@tanstack/react-router' {
       path: '/klanten/$id'
       fullPath: '/klanten/$id'
       preLoaderRoute: typeof AuthenticatedKlantenIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/offertes/$revisionId': {
+      id: '/_authenticated/offertes/$revisionId'
+      path: '/offertes/$revisionId'
+      fullPath: '/offertes/$revisionId'
+      preLoaderRoute: typeof AuthenticatedOffertesRevisionIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/projecten/': {
@@ -209,18 +307,28 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedBeheerRoute: typeof AuthenticatedBeheerRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedGuidedSellingRoute: typeof AuthenticatedGuidedSellingRoute
+  AuthenticatedProductieRoute: typeof AuthenticatedProductieRoute
   AuthenticatedConfiguratorItemIdRoute: typeof AuthenticatedConfiguratorItemIdRoute
+  AuthenticatedFicheItemIdRoute: typeof AuthenticatedFicheItemIdRoute
   AuthenticatedKlantenIdRoute: typeof AuthenticatedKlantenIdRoute
+  AuthenticatedOffertesRevisionIdRoute: typeof AuthenticatedOffertesRevisionIdRoute
   AuthenticatedProjectenIdRoute: typeof AuthenticatedProjectenIdRoute
   AuthenticatedKlantenIndexRoute: typeof AuthenticatedKlantenIndexRoute
   AuthenticatedProjectenIndexRoute: typeof AuthenticatedProjectenIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedBeheerRoute: AuthenticatedBeheerRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedGuidedSellingRoute: AuthenticatedGuidedSellingRoute,
+  AuthenticatedProductieRoute: AuthenticatedProductieRoute,
   AuthenticatedConfiguratorItemIdRoute: AuthenticatedConfiguratorItemIdRoute,
+  AuthenticatedFicheItemIdRoute: AuthenticatedFicheItemIdRoute,
   AuthenticatedKlantenIdRoute: AuthenticatedKlantenIdRoute,
+  AuthenticatedOffertesRevisionIdRoute: AuthenticatedOffertesRevisionIdRoute,
   AuthenticatedProjectenIdRoute: AuthenticatedProjectenIdRoute,
   AuthenticatedKlantenIndexRoute: AuthenticatedKlantenIndexRoute,
   AuthenticatedProjectenIndexRoute: AuthenticatedProjectenIndexRoute,

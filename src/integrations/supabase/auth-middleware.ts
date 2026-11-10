@@ -1,6 +1,7 @@
 import { createMiddleware } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
-import { createLocalClient, userForToken } from "@/lib/local-db";
+import { createSqliteClient } from "@/lib/sqlite-db.server";
+import { userForToken } from "@/lib/local-db";
 
 export const requireSupabaseAuth = createMiddleware({ type: "function" }).server(async ({ next }) => {
   const token = getRequest()?.headers.get("authorization")?.replace(/^Bearer\s+/, "");
@@ -8,7 +9,7 @@ export const requireSupabaseAuth = createMiddleware({ type: "function" }).server
   if (!user) throw new Error("Unauthorized: lokale sessie ontbreekt.");
   return next({
     context: {
-      supabase: createLocalClient(),
+      supabase: createSqliteClient(),
       userId: user.id,
       claims: { sub: user.id },
     },

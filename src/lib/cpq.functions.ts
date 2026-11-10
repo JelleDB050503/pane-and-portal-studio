@@ -12,6 +12,7 @@ import { checkDiscountPolicy } from "@/lib/cpq/totals";
 import type { Catalog, ItemConfig } from "@/lib/cpq/types";
 import { getJorpaConnector, type JorpaQuotePayload } from "@/lib/connectors/jorpa";
 import { createLocalSession } from "@/lib/local-db";
+import { createSqliteClient } from "@/lib/sqlite-db.server";
 
 // All writes to configuration items, quotes, approvals and integration jobs go
 // through these server functions: validation + pricing are re-run here, never trusted from the browser.
@@ -101,7 +102,16 @@ const DEMO_NAMES: Record<AppRole, string> = {
 export const demoSignIn = createServerFn({ method: "POST" })
   .inputValidator((d: { role: string }) => z.object({ role: z.enum(ROLES) }).parse(d))
   .handler(async ({ data }) => {
-    return createLocalSession(data.role);
+    const userId = `local-${data.role}`;
+    const fullName = DEMO_NAMES[data.role];
+    const email = `demo-${data.role}@local.test`;
+    const tokens = createLocalSession(data.role);
+    const db = createSqliteClient();
+    const profile = await db.from("profiles").upsert({ id: userId, full_name: fullName, email }).maybeSingle();
+    if (profile.error) throw new Error("Demo-profiel kon niet opgeslagen worden.");
+    const role = await db.from("user_roles").upsert({ id: `role-${data.role}`, user_id: userId, role: data.role }).maybeSingle();
+    if (role.error) throw new Error("Demo-rol kon niet opgeslagen worden.");
+    return tokens;
     /*
     const admin = await getAdmin();
     const email = `demo-${data.role}@jorpa-demo.example.com`;
@@ -161,7 +171,7 @@ export const saveConfigurationItem = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string; data: unknown; manualOverrides: string[]; expectedVersion: number }) =>
     z
-      .object({ id: z.string().uuid(), data: itemConfigSchema, manualOverrides: z.array(z.string().max(40)).max(40), expectedVersion: z.number().int() })
+      .object({ id: z.string().min(1), data: itemConfigSchema, manualOverrides: z.array(z.string().max(40)).max(40), expectedVersion: z.number().int() })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
@@ -193,7 +203,7 @@ export const saveConfigurationItem = createServerFn({ method: "POST" })
 export const addProjectItem = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { projectId: string; label: string; productCode: string | null; family: string }) =>
-    z.object({ projectId: z.string().uuid(), label: z.string().trim().min(1).max(120), productCode: z.string().max(40).nullable(), family: z.string().max(40) }).parse(d),
+    z.object({ projectId: z.string().min(1), label: z.string().trim().min(1).max(120), productCode: z.string().max(40).nullable(), family: z.string().max(40) }).parse(d),
   )
   .handler(async ({ data, context }) => {
     const sb = context.supabase as unknown as Sb;
@@ -224,7 +234,7 @@ export const addProjectItem = createServerFn({ method: "POST" })
 
 export const duplicateProjectItem = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { configurationItemId: string }) => z.object({ configurationItemId: z.string().uuid() }).parse(d))
+  .inputValidator((d: { configurationItemId: string }) => z.object({ configurationItemId: z.string().min(1) }).parse(d))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as unknown as Sb;
     await requireRoles(sb, context.userId, SALES);
@@ -260,7 +270,7 @@ export const bulkApplyChange = createServerFn({ method: "POST" })
   .inputValidator((d: { configurationItemIds: string[]; field: string; value: string; overwriteExceptions: boolean }) =>
     z
       .object({
-        configurationItemIds: z.array(z.string().uuid()).min(1).max(200),
+        configurationItemIds: z.array(z.string().min(1)).min(1).max(200),
         field: z.enum(BULK_FIELDS),
         value: z.string().min(1).max(40),
         overwriteExceptions: z.boolean(),
@@ -307,7 +317,7 @@ export const bulkApplyChange = createServerFn({ method: "POST" })
 export const createVariant = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { sourceConfigurationId: string; name: string; description: string }) =>
-    z.object({ sourceConfigurationId: z.string().uuid(), name: z.string().trim().min(1).max(120), description: z.string().max(500) }).parse(d),
+    z.object({ sourceConfigurationId: z.string().min(1), name: z.string().trim().min(1).max(120), description: z.string().max(500) }).parse(d),
   )
   .handler(async ({ data, context }) => {
     const sb = context.supabase as unknown as Sb;
@@ -357,11 +367,11 @@ export const createQuoteRevision = createServerFn({ method: "POST" })
   .inputValidator((d: { projectId: string; primaryConfigurationId: string; alternativeConfigurationIds: string[]; discountPercent: number; templateId: string | null }) =>
     z
       .object({
-        projectId: z.string().uuid(),
-        primaryConfigurationId: z.string().uuid(),
-        alternativeConfigurationIds: z.array(z.string().uuid()).max(5),
+        projectId: z.string().min(1),
+        primaryConfigurationId: z.string().min(1),
+        alternativeConfigurationIds: z.array(z.string().min(1)).max(5),
         discountPercent: z.number().min(0).max(100),
-        templateId: z.string().uuid().nullable(),
+        templateId: z.string().min(1).nullable(),
       })
       .parse(d),
   )
@@ -504,7 +514,7 @@ export const transitionQuote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { revisionId: string; action: string; comment?: string }) =>
     z
-      .object({ revisionId: z.string().uuid(), action: z.enum(["submit", "approve", "reject", "send", "accept", "decline", "expire"]), comment: z.string().max(1000).optional() })
+      .object({ revisionId: z.string().min(1), action: z.enum(["submit", "approve", "reject", "send", "accept", "decline", "expire"]), comment: z.string().max(1000).optional() })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
@@ -581,7 +591,7 @@ export const transitionQuote = createServerFn({ method: "POST" })
 export const sendToJorpa = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { revisionId: string; simulate: string }) =>
-    z.object({ revisionId: z.string().uuid(), simulate: z.enum(["none", "timeout", "server_error"]) }).parse(d),
+    z.object({ revisionId: z.string().min(1), simulate: z.enum(["none", "timeout", "server_error"]) }).parse(d),
   )
   .handler(async ({ data, context }) => {
     const sb = context.supabase as unknown as Sb;

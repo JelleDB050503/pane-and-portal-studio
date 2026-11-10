@@ -1,13 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { RouteError } from "@/components/cpq/route-error";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowRight } from "lucide-react";
 import { dashboardQuery } from "@/lib/queries";
 import { PageHeader, Panel, EmptyState } from "@/components/cpq/page";
 import { QuoteStatusBadge } from "@/components/cpq/badges";
-import { eur, formatDate, formatDateTime, PROJECT_STATUS_LABEL, type QuoteStatus } from "@/lib/labels";
+import { eur, formatDate, formatDateTime, PROJECT_STATUS_KEYS, type QuoteStatus } from "@/lib/labels";
 import { useMe } from "@/components/cpq/app-shell";
 import { can } from "@/lib/auth";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard – JoRPA CPQ demo" }, { name: "description", content: "Openstaande offertes, concepten en goedkeuringen." }] }),
@@ -18,6 +20,10 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Dashboard() {
   const me = useMe();
+  const { t } = useI18n();
+  useEffect(() => {
+    document.title = `${t("page.dashboard.title")} – JoRPA CPQ demo`;
+  }, [t]);
   const { data } = useSuspenseQuery(dashboardQuery());
   const latest = data.quotes.map((q) => {
     const revs = [...q.quote_revisions].sort((a, b) => b.revision_no - a.revision_no);
@@ -34,28 +40,28 @@ function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <PageHeader eyebrow="Overzicht" title={`Goedemorgen, ${me.name.split(" ")[0]}`} subtitle="Stand van offertes en projecten (fictieve gegevens)." />
+      <PageHeader eyebrow={t("dashboard.eyebrow")} title={`${t("dashboard.greeting")}, ${me.name.split(" ")[0]}`} subtitle={t("dashboard.subtitle")} />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Kpi label="Openstaande offertes" value={String(open.length)} sub={`${eur(openValue)} excl. btw`} />
-        <Kpi label="Concepten" value={String(concepts.length)} sub="nog niet ingediend" />
-        <Kpi label="Wachtend op goedkeuring" value={String(waiting.length)} sub={can.approve(me.role) ? "jouw beoordeling nodig" : "bij manager"} tone={waiting.length ? "warning" : undefined} />
-        <Kpi label="Scoringsgraad" value={hitRate === null ? "—" : `${hitRate}%`} sub={`${won.length} aanvaard van ${decided.length} beslist`} />
+        <Kpi label={t("dashboard.openQuotes")} value={String(open.length)} sub={`${eur(openValue)} ${t("dashboard.exclVat")}`} />
+        <Kpi label={t("dashboard.drafts")} value={String(concepts.length)} sub={t("dashboard.notSubmitted")} />
+        <Kpi label={t("dashboard.pendingApproval")} value={String(waiting.length)} sub={can.approve(me.role) ? t("dashboard.yourReview") : t("dashboard.manager")} tone={waiting.length ? "warning" : undefined} />
+        <Kpi label={t("dashboard.winRate")} value={hitRate === null ? "—" : `${hitRate}%`} sub={`${won.length} ${t("dashboard.acceptedOf")} ${decided.length} ${t("dashboard.decided")}`} />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
-        <Panel title="Offertes" bodyClassName="p-0">
+        <Panel title={t("dashboard.quotes")} bodyClassName="p-0">
           {latest.length === 0 ? (
             <div className="p-4">
-              <EmptyState>Nog geen offertes. Open een project en klik op "Offerte maken".</EmptyState>
+              <EmptyState>{t("dashboard.noQuotes")}</EmptyState>
             </div>
           ) : (
             <table className="w-full text-sm">
               <thead className="bg-muted/60 text-left text-xs text-muted-foreground">
                 <tr>
-                  <th className="px-4 py-2 font-medium">Offerte</th>
-                  <th className="px-4 py-2 font-medium">Project / klant</th>
-                  <th className="px-4 py-2 font-medium">Status</th>
-                  <th className="px-4 py-2 text-right font-medium">Netto</th>
+                  <th className="px-4 py-2 font-medium">{t("dashboard.quotes")}</th>
+                  <th className="px-4 py-2 font-medium">{t("dashboard.projectCustomer")}</th>
+                  <th className="px-4 py-2 font-medium">{t("dashboard.status")}</th>
+                  <th className="px-4 py-2 text-right font-medium">{t("dashboard.net")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -77,7 +83,7 @@ function Dashboard() {
                     </td>
                     <td className="px-4 py-2.5">
                       {q.rev && <QuoteStatusBadge status={q.rev.status} />}
-                      {q.rev?.requires_approval && q.rev.status === "concept" && <div className="mt-1 text-xs text-warning-foreground">goedkeuring vereist</div>}
+                      {q.rev?.requires_approval && q.rev.status === "concept" && <div className="mt-1 text-xs text-warning-foreground">{t("dashboard.approvalRequired")}</div>}
                     </td>
                     <td className="tabular px-4 py-2.5 text-right">{eur(q.rev?.total_net)}</td>
                   </tr>
@@ -89,7 +95,7 @@ function Dashboard() {
 
         <div className="space-y-6">
           {waiting.length > 0 && (
-            <Panel title="Wachtend op goedkeuring">
+            <Panel title={t("dashboard.waitingApproval")}>
               <ul className="space-y-3">
                 {waiting.map((q) => {
                   const appr = data.approvals.find((a) => a.revision_id === q.rev?.id);
@@ -101,7 +107,7 @@ function Dashboard() {
                       </div>
                       {appr && <p className="mt-1 text-xs text-muted-foreground">{appr.reason}</p>}
                       <Link to="/offertes/$revisionId" params={{ revisionId: q.rev!.id }} className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
-                        {can.approve(me.role) ? "Beoordelen" : "Bekijken"} <ArrowRight className="h-3 w-3" />
+                        {can.approve(me.role) ? t("dashboard.review") : t("dashboard.view")} <ArrowRight className="h-3 w-3" />
                       </Link>
                     </li>
                   );
@@ -110,10 +116,10 @@ function Dashboard() {
             </Panel>
           )}
           <Panel
-            title="Recent gewijzigde projecten"
+            title={t("dashboard.recentProjects")}
             actions={
               <Link to="/projecten" className="text-xs font-medium text-primary hover:underline">
-                Alle projecten
+                {t("dashboard.allProjects")}
               </Link>
             }
             bodyClassName="p-0"
@@ -129,8 +135,8 @@ function Dashboard() {
                       </div>
                     </div>
                     <div className="text-right text-xs text-muted-foreground">
-                      <div>{PROJECT_STATUS_LABEL[p.status] ?? p.status}</div>
-                      <div>levering {formatDate(p.desired_delivery_date)}</div>
+                      <div>{PROJECT_STATUS_KEYS[p.status] ? t(PROJECT_STATUS_KEYS[p.status]!) : p.status}</div>
+                      <div>{t("dashboard.delivery")} {formatDate(p.desired_delivery_date)}</div>
                     </div>
                   </Link>
                 </li>

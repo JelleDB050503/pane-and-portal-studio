@@ -20,6 +20,49 @@ export const toCents = (eur: number | string | null | undefined) => Math.round(N
 export const fromCents = (c: number) => c / 100;
 const round3 = (n: number) => Math.round(n * 1000) / 1000;
 
+type PricingIndex = {
+  base: Map<string, PriceEntry>;
+  matrix: Map<string, PriceEntry[]>;
+  option: Map<string, PriceEntry>;
+  component: Map<string, PriceEntry>;
+  service: Map<string, PriceEntry>;
+  labour: PriceEntry[];
+};
+
+const pricingIndexes = new WeakMap<Catalog, PricingIndex>();
+
+function pricingIndex(catalog: Catalog): PricingIndex {
+  const cached = pricingIndexes.get(catalog);
+  if (cached) return cached;
+
+  const index: PricingIndex = {
+    base: new Map(),
+    matrix: new Map(),
+    option: new Map(),
+    component: new Map(),
+    service: new Map(),
+    labour: [],
+  };
+  for (const entry of catalog.priceEntries) {
+    if (entry.entry_type === "base" && entry.system_code && !index.base.has(entry.system_code)) index.base.set(entry.system_code, entry);
+    if (entry.entry_type === "matrix" && entry.system_code) {
+      const entries = index.matrix.get(entry.system_code) ?? [];
+      entries.push(entry);
+      index.matrix.set(entry.system_code, entries);
+    }
+    if (entry.entry_type === "option" && entry.option_code && entry.value_code) {
+      const key = `${entry.system_code ?? "*"}:${entry.option_code}:${entry.value_code}`;
+      if (!index.option.has(key)) index.option.set(key, entry);
+    }
+    if (entry.entry_type === "component" && entry.component_code && !index.component.has(entry.component_code)) index.component.set(entry.component_code, entry);
+    if (entry.entry_type === "service" && entry.value_code && !index.service.has(entry.value_code)) index.service.set(entry.value_code, entry);
+    if (entry.entry_type === "labour") index.labour.push(entry);
+  }
+  for (const entries of index.matrix.values()) entries.sort((a, b) => (a.width_upto ?? 0) - (b.width_upto ?? 0) || (a.height_upto ?? 0) - (b.height_upto ?? 0));
+  pricingIndexes.set(catalog, index);
+  return index;
+}
+
 function unitQty(unit: PriceUnit, ev: Evaluation): { qty: number; unit: string } {
   const cfg = ev.config;
   switch (unit) {
@@ -54,7 +97,7 @@ export function quantityDiscountPercent(discounts: Discount[], quantity: number)
 
 export function priceItem(catalog: Catalog, ev: Evaluation, bom: Bom): ItemPrice {
   const cfg = ev.config;
-  const entries = catalog.priceEntries;
+  const index = pricingIndex(catalog);
   const lines: PriceLine[] = [];
   const missing: string[] = [];
   const pb = catalog.priceBook;
@@ -62,13 +105,13 @@ export function priceItem(catalog: Catalog, ev: Evaluation, bom: Bom): ItemPrice
   if (!pb) missing.push("Geen geldig prijsboek gevonden.");
 
   // Base price per system
-  const base = entries.find((e) => e.entry_type === "base" && e.system_code === cfg.system);
+  const base = cfg.system ? index.base.get(cfg.system) : undefined;
   if (base) lines.push(line(`BASE:${cfg.system}`, base.label ?? `Basisprijs ${valueLabel(catalog, "system", cfg.system)}`, "basis", 1, "st", toCents(base.amount)));
   else if (cfg.system) missing.push(`Geen basisprijs voor systeem ${cfg.system}.`);
 
   // Width × height matrix
   if (cfg.system && cfg.width_mm > 0 && cfg.height_mm > 0) {
-    const m = findMatrixEntry(entries, cfg.system, cfg.width_mm, cfg.height_mm);
+    const m = (index.matrix.get(cfg.system) ?? []).find((e) => (e.width_upto ?? 0) >= cfg.width_mm && (e.height_upto ?? 0) >= cfg.height_mm);
     if (m) lines.push(line(`MATRIX:${cfg.system}:${m.width_upto}x${m.height_upto}`, `Maatprijs tot ${m.width_upto} × ${m.height_upto} mm`, "matrix", 1, "st", toCents(m.amount)));
     else missing.push(`Geen matrixprijs voor ${cfg.width_mm} × ${cfg.height_mm} mm in systeem ${cfg.system}.`);
   }
@@ -77,7 +120,7 @@ export function priceItem(catalog: Catalog, ev: Evaluation, bom: Bom): ItemPrice
   // Option / attribute prices
   const optionPrice = (optionCode: string, valueCode: string, count?: number) => {
     if (count === 0) return;
-    const e = entries.find((x) => x.entry_type === "option" && x.option_code === optionCode && x.value_code === valueCode && (!x.system_code || x.system_code === cfg.system));
+    const e = index.option.get(`${cfg.system}:${optionCode}:${valueCode}`) ?? index.option.get(`*:${optionCode}:${valueCode}`);
     if (!e || Number(e.amount) === 0) return;
     const label = `${catalog.options.find((o) => o.code === optionCode)?.name_nl ?? optionCode}: ${valueLabel(catalog, optionCode, valueCode)}`;
     if (e.unit === "percent") {
@@ -97,7 +140,7 @@ export function priceItem(catalog: Catalog, ev: Evaluation, bom: Bom): ItemPrice
   // Components priced through the BOM
   for (const node of bom.manufacturing) {
     for (const l of node.lines) {
-      const e = entries.find((x) => x.entry_type === "component" && x.component_code === l.component_code);
+      const e = index.component.get(l.component_code);
       if (e) lines.push(line(`COMP:${l.component_code}`, e.label ?? l.description, "component", l.qty_per_piece, l.unit, toCents(e.amount)));
     }
   }
@@ -117,14 +160,14 @@ export function priceItem(catalog: Catalog, ev: Evaluation, bom: Bom): ItemPrice
   }
 
   // Labour
-  for (const e of entries.filter((x) => x.entry_type === "labour" && (!x.system_code || x.system_code === cfg.system))) {
+  for (const e of index.labour.filter((x) => !x.system_code || x.system_code === cfg.system)) {
     const u = unitQty(e.unit, ev);
     lines.push(line(`LAB:${e.value_code ?? e.id}`, e.label ?? "Arbeid", "arbeid", u.qty, u.unit, toCents(e.amount)));
   }
 
   // Services
   for (const s of cfg.services) {
-    const e = entries.find((x) => x.entry_type === "service" && x.value_code === s);
+    const e = index.service.get(s);
     if (!e) {
       missing.push(`Geen prijs voor dienst ${valueLabel(catalog, "diensten", s)}.`);
       continue;
